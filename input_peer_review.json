@@ -1,0 +1,12 @@
+[
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/PeerRead/data/acl_2017/train/reviews/processed_data/pos_reviews"
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/PeerRead/data/acl_2017/train/reviews/processed_data/neg_reviews"
+        },
+        "name": "Peer review",
+        "saves_dir": "peer_review"
+    }
+]

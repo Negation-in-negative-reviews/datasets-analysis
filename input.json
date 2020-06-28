@@ -1,0 +1,112 @@
+[
+    
+    
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/stanford-sentiment-treebank/processed_data/pos_reviews"
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/stanford-sentiment-treebank/processed_data/neg_reviews"
+        },
+        "name": "SST",
+        "saves_dir": "sst"
+    },   
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/yelp/processed_data/review.1",         
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/yelp/processed_data/review.0",            
+            "n_samples": 5000
+        }, 
+        "name": "Yelp",
+        "saves_dir": "yelp"
+    },   
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/imdb_dataset/processed_data/pos_reviews_train",      
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/imdb_dataset/processed_data/neg_reviews_train",            
+            "n_samples": 5000
+        },
+        "name": "IMDB",
+        "saves_dir": "imdb"
+    },
+
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/tripadvisor/processed_data/pos_reviews_train",
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/tripadvisor/processed_data/neg_reviews_train",                
+            "n_samples": 5000
+        },
+        "name": "Tripadvisor",
+        "saves_dir": "tripadvisor"
+    },
+
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/cellphones_and_accessories/pos_reviews_train",
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/cellphones_and_accessories/neg_reviews_train",
+            "n_samples": 5000
+        },
+        "name": "Cellphones",
+        "saves_dir": "cellphones"
+    },
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/pet_supplies/pos_reviews_train",
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/pet_supplies/neg_reviews_train",
+            "n_samples": 5000
+        },
+        "name": "Pet Supplies",
+        "saves_dir": "pet_supplies"        
+    },
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/automotive/pos_reviews_train",
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/automotive/neg_reviews_train",
+            "n_samples": 5000
+        },
+        "name": "Automotive",
+        "saves_dir": "automotive"
+    },
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/sports_and_outdoors/pos_reviews_train",
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/sports_and_outdoors/neg_reviews_train",
+            "n_samples": 5000
+        },
+        "name": "Sports",
+        "saves_dir": "sports_and_outdoors"
+    },
+    {
+        "positive": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/luxury_beauty/pos_reviews_train",
+            "n_samples": 5000
+        },
+        "negative": {
+            "data_filepath": "/data/madhu/amazon-reviews-2018/processed_data/luxury_beauty/neg_reviews_train",
+            "n_samples": 5000
+        },
+        "name": "Luxury Beauty",
+        "saves_dir": "luxury_beauty"
+    }
+]
