@@ -87,11 +87,9 @@ if __name__ == "__main__":
                         default=23,
                         type=int,
                         help="")
-    parser.add_argument("--preload_flag",
-                        action='store_true',
-                        help="Whether to use precomputed pickle files.")
     
-    args = parser.parse_args()    
+    args = parser.parse_args()  
+    myprint(f"args: {args}")     
     np.random.seed(args.seed_val)
 
     saves_dir = os.path.join(args.saves_dir_name, "not_token_dist")
@@ -102,73 +100,73 @@ if __name__ == "__main__":
     plot_data_sent_level = []
     plot_data_review_level = []
 
-    if not args.preload_flag:        
-        datasets = json.loads(open(args.dataset_info_json, "r").read())
-        for data in datasets:
-            myprint(data)        
-            not_count_sent_normalized, not_count_token_normalized, not_count_review_normalized = count_not_token(data["positive"])
+    # if not args.preload_flag:        
+    datasets = json.loads(open(args.datasets_info_json, "r").read())
+    for data in datasets:
+        myprint(data)        
+        not_count_sent_normalized, not_count_token_normalized, not_count_review_normalized = count_not_token(data["positive"])
 
-            plot_data_word_level.append({
-                "category": "positive reviews",
-                "name": data["name"],
-                "Average no of tokens": np.mean(not_count_token_normalized),
-                "sem_value": stats.sem(not_count_token_normalized)
-            })
+        plot_data_word_level.append({
+            "category": "positive reviews",
+            "name": data["name"],
+            "Average no of tokens": np.mean(not_count_token_normalized),
+            "sem_value": stats.sem(not_count_token_normalized)
+        })
 
-            plot_data_sent_level.append({
-                "category": "positive reviews",
-                "name": data["name"],
-                "Average no of tokens": np.mean(not_count_sent_normalized),
-                "sem_value": stats.sem(not_count_sent_normalized)
-            })
+        plot_data_sent_level.append({
+            "category": "positive reviews",
+            "name": data["name"],
+            "Average no of tokens": np.mean(not_count_sent_normalized),
+            "sem_value": stats.sem(not_count_sent_normalized)
+        })
 
-            plot_data_review_level.append({
-                "category": "positive reviews",
-                "name": data["name"],
-                "Average no of tokens": np.mean(not_count_review_normalized),
-                "sem_value": stats.sem(not_count_review_normalized)
-            })
+        plot_data_review_level.append({
+            "category": "positive reviews",
+            "name": data["name"],
+            "Average no of tokens": np.mean(not_count_review_normalized),
+            "sem_value": stats.sem(not_count_review_normalized)
+        })
 
-            not_count_sent_normalized, not_count_token_normalized, not_count_review_normalized = count_not_token(data["negative"])
+        not_count_sent_normalized, not_count_token_normalized, not_count_review_normalized = count_not_token(data["negative"])
 
-            plot_data_word_level.append({
-                "category": "negative reviews",
-                "name": data["name"],
-                "Average no of tokens": np.mean(not_count_token_normalized),
-                "sem_value": stats.sem(not_count_token_normalized)
-            })
+        plot_data_word_level.append({
+            "category": "negative reviews",
+            "name": data["name"],
+            "Average no of tokens": np.mean(not_count_token_normalized),
+            "sem_value": stats.sem(not_count_token_normalized)
+        })
 
-            plot_data_sent_level.append({
-                "category": "negative reviews",
-                "name": data["name"],
-                "Average no of tokens": np.mean(not_count_sent_normalized),
-                "sem_value": stats.sem(not_count_sent_normalized)
-            })
+        plot_data_sent_level.append({
+            "category": "negative reviews",
+            "name": data["name"],
+            "Average no of tokens": np.mean(not_count_sent_normalized),
+            "sem_value": stats.sem(not_count_sent_normalized)
+        })
 
-            plot_data_review_level.append({
-                "category": "negative reviews",
-                "name": data["name"],
-                "Average no of tokens": np.mean(not_count_review_normalized),
-                "sem_value": stats.sem(not_count_review_normalized)
-            })
-            
-            print()
-            print()
+        plot_data_review_level.append({
+            "category": "negative reviews",
+            "name": data["name"],
+            "Average no of tokens": np.mean(not_count_review_normalized),
+            "sem_value": stats.sem(not_count_review_normalized)
+        })
+        
+        print()
+        print()
 
-        pickle.dump({
-            "plot_data_word_level": plot_data_word_level,
-            "plot_data_sent_level": plot_data_sent_level,
-            "plot_data_review_level": plot_data_review_level
-        }, open(os.path.join(saves_dir, save_prefix+"_dist.pickle"), "wb"))
-    else:
-        temp_json = pickle.load(open(os.path.join(saves_dir, save_prefix+"_dist.pickle"), "rb"))
-        plot_data_word_level = temp_json["plot_data_word_level"]
-        plot_data_sent_level = temp_json["plot_data_sent_level"]
-        plot_data_review_level = temp_json["plot_data_review_level"]
+    pickle.dump({
+        "plot_data_word_level": plot_data_word_level,
+        "plot_data_sent_level": plot_data_sent_level,
+        "plot_data_review_level": plot_data_review_level
+    }, open(os.path.join(saves_dir, save_prefix+"_dist.pickle"), "wb"))
+    # else:
+    #     temp_json = pickle.load(open(os.path.join(saves_dir, save_prefix+"_dist.pickle"), "rb"))
+    #     plot_data_word_level = temp_json["plot_data_word_level"]
+    #     plot_data_sent_level = temp_json["plot_data_sent_level"]
+    #     plot_data_review_level = temp_json["plot_data_review_level"]
 
-    seaborn_plot_util.draw_grouped_barplot(plot_data_word_level, "name", "Average no of tokens", 
-    "category", os.path.join(saves_dir, save_prefix+"_word_level.png"))
-    seaborn_plot_util.draw_grouped_barplot(plot_data_sent_level, "name", "Average no of tokens", 
-    "category", os.path.join(saves_dir, save_prefix+"_sent_level.png"))
-    seaborn_plot_util.draw_grouped_barplot(plot_data_review_level, "name", "Average no of tokens", 
-    "category", os.path.join(saves_dir, save_prefix+"_review_level.png"))
+    # seaborn_plot_util.draw_grouped_barplot(plot_data_word_level, "name", "Average no of tokens", 
+    # "category", os.path.join(saves_dir, save_prefix+"_word_level.png"))
+    # seaborn_plot_util.draw_grouped_barplot(plot_data_sent_level, "name", "Average no of tokens", 
+    # "category", os.path.join(saves_dir, save_prefix+"_sent_level.png"))
+    # seaborn_plot_util.draw_grouped_barplot(plot_data_review_level, "name", "Average no of tokens", 
+    # "category", os.path.join(saves_dir, save_prefix+"_review_level.png"))

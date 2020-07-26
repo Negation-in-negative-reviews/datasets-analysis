@@ -15,11 +15,13 @@ import os
 import csv
 import util
 import pprint
+import argparse
+
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
 
 nlp = spacy.load("en_core_web_md")
-VADER_LEXICON_PATH = "/home/madhu/vaderSentiment/vaderSentiment/vader_lexicon.txt"
+# VADER_LEXICON_PATH = "/home/madhu/vaderSentiment/vaderSentiment/vader_lexicon.txt"
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
@@ -32,15 +34,14 @@ def read_vader_sentiment_dict(filepath):
         for line in fin:
             values = line.split("\t")
             vader_sentiment_scores[values[0]] = float(values[1])
-
     return vader_sentiment_scores
 
 def compute_vadersentiment(data, dataset_name, vader_sentiment_scores):
     
     data_filepath = data["data_filepath"]
-    saves_dir = os.path.join("saves", dataset_name)
-    Path(saves_dir).mkdir(parents=True, exist_ok=True)   
-    save_pickle_path = os.path.join(saves_dir, "vader_pos_neg_dist_full_analysis_data.pickle")
+    # saves_dir = os.path.join("saves", dataset_name)
+    # Path(saves_dir).mkdir(parents=True, exist_ok=True)   
+    # save_pickle_path = os.path.join(saves_dir, "vader_pos_neg_dist_full_analysis_data.pickle")
 
     n_samples = None
     if "n_samples" in data:
@@ -60,8 +61,6 @@ def compute_vadersentiment(data, dataset_name, vader_sentiment_scores):
         selected_reviews = [all_reviews[idx] for idx in indices]
         count = 0
         for rev in selected_reviews:
-            # if count%1000 == 0:
-            #     print(count)
             count += 1
             doc = nlp(rev)            
             token_count = len(doc)
@@ -110,9 +109,9 @@ def compute_vadersentiment(data, dataset_name, vader_sentiment_scores):
         myprint(f"Negative words count, sent-level: {np.mean(neg_sent_level)}")
         myprint(f"Negative words count, word-level: {np.mean(neg_word_level)}")
 
-        pickle.dump({
-            "negation_analysis_data": review_data
-        }, open(save_pickle_path, "wb"))
+        # pickle.dump({
+        #     "negation_analysis_data": review_data
+        # }, open(save_pickle_path, "wb"))
 
         return review_data
 
@@ -158,10 +157,32 @@ def compute_vadersentiment_util(data, name, vader_sentiment_scores, category,
 
 
 if __name__ == "__main__": 
-    seed_val = 23
-    np.random.seed(seed_val)
+    parser = argparse.ArgumentParser()
 
-    preload_flag = True
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        # required=True,
+                        help="")   
+    parser.add_argument("--vader_lexicon_path",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")   
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+    
+    args = parser.parse_args()    
+    np.random.seed(args.seed_val)
+    myprint(f"args: {args}")
 
     plot_data = {
         "word_level": [],
@@ -169,49 +190,23 @@ if __name__ == "__main__":
         "review_level": []
     }
 
-    saves_dir = os.path.join("saves", "pos_neg")
+    saves_dir = os.path.join(args.saves_dir_name, "pos_neg")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
     plot_save_prefix = "vader_pos_neg_dist"
 
     analysis_types = list(plot_data.keys())
-
-    if not preload_flag:
-        vader_sentiment_scores = read_vader_sentiment_dict(VADER_LEXICON_PATH)
-        datasets = json.loads(open("input.json").read())
+    
+    vader_sentiment_scores = read_vader_sentiment_dict(args.vader_lexicon_path)
+    datasets = json.loads(open(args.datasets_info_json).read())
+    
+    for data in datasets:
+        myprint(data)                
+        compute_vadersentiment_util(data["positive"], data["name"], vader_sentiment_scores, "positive", 
+            plot_data, analysis_types)
         
-        for data in datasets:
-            myprint(data)                
-            compute_vadersentiment_util(data["positive"], data["name"], vader_sentiment_scores, "positive", 
-                plot_data, analysis_types)
-            
-            compute_vadersentiment_util(data["negative"], data["name"], vader_sentiment_scores, "negative", 
-                plot_data, analysis_types)
+        compute_vadersentiment_util(data["negative"], data["name"], vader_sentiment_scores, "negative", 
+            plot_data, analysis_types)
+        print()
+        print()
 
-            print()
-            print()
-
-        pickle.dump(plot_data, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))
-    else:
-        plot_data = pickle.load(open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "rb"))
-
-    for analysis in analysis_types:   
-        myprint(analysis)     
-        amazon_data, non_amazon_data = util.filter_amazon(plot_data[analysis])
-        # ylim_top = max(max([float(d["value"]) for d in amazon_data]), max([float(d["value"]) for d in non_amazon_data]))
-        ylim_top = max([float(d["value"]) for d in non_amazon_data])
-        ylim_top = 1.7*ylim_top
-
-        seaborn_plot_util_old.draw_grouped_barplot_four_subbars(non_amazon_data, "name", "value", 
-            "category", 
-            os.path.join(saves_dir, 
-            plot_save_prefix+"_"+str(analysis)+"_non_amz"),
-            ylim_top=ylim_top)
-        
-        ylim_top =  max([float(d["value"]) for d in amazon_data])
-        ylim_top = 1.7*ylim_top
-        seaborn_plot_util_old.draw_grouped_barplot_four_subbars(amazon_data, "name", "value", 
-            "category", 
-            os.path.join(saves_dir, 
-            plot_save_prefix+"_"+str(analysis)+"_amz"),
-            ylim_top=ylim_top, amazon_data_flag=True)
-
+    pickle.dump(plot_data, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))

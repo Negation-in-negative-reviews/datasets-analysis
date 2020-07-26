@@ -94,9 +94,6 @@ def compute_negation_using_liwc(data, save_pickle_path, result, class_id, cluste
         myprint(f"Negation dist. negemo, sent-level: {np.mean(negation_neg_sent_level)}")
         myprint(f"Negation dist. negemo, word-level: {np.mean(negation_neg_word_level)}")
 
-        # myprint(f"Negemo words: {list(map(lambda x: x['negemo_words'], review_level_liwc))}")
-        # myprint(f"Posemo words: {list(map(lambda x: x['posemo_words'], review_level_liwc))}")
-
         pickle.dump({
             "negation_analysis_data": review_level_liwc
         }, open(save_pickle_path, "wb"))
@@ -115,31 +112,26 @@ if __name__ == "__main__":
     parser.add_argument("--saves_dir_name",
                         default="saves",
                         type=str,
-                        required=True,
                         help="")
     parser.add_argument("--liwc_filepath",
-                        default="/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic",
+                        default=None,
                         type=str,
                         required=True,
                         help="")
     parser.add_argument("--seed_val",
                         default=23,
                         type=int,
-                        help="")
-    parser.add_argument("--preload_flag",
-                        action='store_true',
-                        help="Whether to use precomputed pickle files.")
+                        help="")   
     
-    args = parser.parse_args()    
+    args = parser.parse_args()  
+    myprint(f"args: {args}")     
     np.random.seed(args.seed_val)    
     result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(args.liwc_filepath)
-    datasets = json.loads(open(args.dataset_info_json, "r").read())
+    datasets = json.loads(open(args.datasets_info_json, "r").read())
     saves_dir = os.path.join(args.saves_dir_name, "negation_using_liwc")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
-    plot_save_prefix = "liwc_negation_"
+    # plot_save_prefix = "liwc_negation"
     
-    
-    myprint(f"args: {args}")
     for data in datasets:               
         save_pickle_path = os.path.join(saves_dir, data["name"]+"_pos_reviews.pickle")
         compute_negation_using_liwc(data["positive"], save_pickle_path, result, class_id, 

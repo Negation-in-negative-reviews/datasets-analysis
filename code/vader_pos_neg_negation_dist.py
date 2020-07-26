@@ -14,11 +14,13 @@ import json
 from pathlib import Path
 import os
 import util
+import argparse
+
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
 
 nlp = spacy.load("en_core_web_md")
-VADER_LEXICON_PATH = "/home/madhu/vaderSentiment/vaderSentiment/vader_lexicon.txt"
+# VADER_LEXICON_PATH = "/home/madhu/vaderSentiment/vaderSentiment/vader_lexicon.txt"
 def read_vader_sentiment_dict(filepath):
     vader_sentiment_scores = {}
     with open(filepath, "r") as fin:
@@ -28,12 +30,12 @@ def read_vader_sentiment_dict(filepath):
 
     return vader_sentiment_scores
 
-def compute_vadersentiment(data, dataset_name, vader_sentiment_scores):
+def compute_vadersentiment(data, dataset_name, vader_sentiment_scores, saves_dir):
     
     data_filepath = data["data_filepath"]
-    saves_dir = os.path.join("saves", dataset_name)
+    # saves_dir = os.path.join(, dataset_name)
     Path(saves_dir).mkdir(parents=True, exist_ok=True)   
-    save_pickle_path = os.path.join(saves_dir, "vader_pos_neg_negation_dist.pickle")
+    save_pickle_path = os.path.join(saves_dir, dataset_name+"_vader_pos_neg_negation_dist.pickle")
 
     n_samples = None
     if "n_samples" in data:
@@ -116,10 +118,10 @@ def compute_vadersentiment(data, dataset_name, vader_sentiment_scores):
         return review_data
 
 def compute_vadersentiment_util(data, name, vader_sentiment_scores, category, 
-    plot_data, analysis_types):
+    plot_data, analysis_types, saves_dir):
 
 
-    analysis_data = compute_vadersentiment(data, name, vader_sentiment_scores)    
+    analysis_data = compute_vadersentiment(data, name, vader_sentiment_scores, saves_dir)    
 
     for analysis in analysis_types:
         if analysis == "review_level":   
@@ -159,10 +161,33 @@ def compute_vadersentiment_util(data, name, vader_sentiment_scores, category,
 
 
 if __name__ == "__main__": 
-    seed_val = 23
-    np.random.seed(seed_val)
+    parser = argparse.ArgumentParser()
 
-    preload_flag = True
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        # required=True,
+                        help="")
+    parser.add_argument("--vader_lexicon_path",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")    
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+    
+    args = parser.parse_args() 
+    myprint(f"args: {args}")   
+    np.random.seed(args.seed_val)
+    
     amazon_names = ['Pet Supplies', 'Luxury Beauty', 'Automotive', 'Cellphones', 'Sports']
 
     plot_data = {
@@ -172,61 +197,22 @@ if __name__ == "__main__":
     }
     analysis_types = list(plot_data.keys())
 
-    saves_dir = os.path.join("saves", "pos_neg_negation")
+    saves_dir = os.path.join(args.saves_dir_name, "pos_neg_negation")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
     plot_save_prefix = "vader_pos_neg_negation_dist"
 
-    if not preload_flag:
-        vader_sentiment_scores = read_vader_sentiment_dict(VADER_LEXICON_PATH)
-        datasets = json.loads(open("input.json", "r").read())
+    vader_sentiment_scores = read_vader_sentiment_dict(args.vader_lexicon_path)
+    datasets = json.loads(open(args.datasets_info_json, "r").read())
 
-        for data in datasets:
-            myprint(data)        
-            compute_vadersentiment_util(data["positive"], data["name"], vader_sentiment_scores, "positive", 
-                plot_data, analysis_types)
+    for data in datasets:
+        myprint(data)        
+        compute_vadersentiment_util(data["positive"], data["name"], vader_sentiment_scores, "positive", 
+            plot_data, analysis_types, saves_dir)
 
-            compute_vadersentiment_util(data["negative"], data["name"], vader_sentiment_scores, "negative", 
-                plot_data, analysis_types)
+        compute_vadersentiment_util(data["negative"], data["name"], vader_sentiment_scores, "negative", 
+            plot_data, analysis_types, saves_dir)
 
-            print()
-            print()
+        print()
+        print()
 
-        # pickle.dump({
-        #     "plot_data_word_level": plot_data_word_level,
-        #     "plot_data_sent_level": plot_data_sent_level,
-        #     "plot_data_review_level": plot_data_review_level
-        # }, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))
-        pickle.dump(plot_data, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))
-    else:
-        # temp_json = pickle.load(open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "rb"))
-        # plot_data_word_level = temp_json["plot_data_word_level"]
-        # plot_data_sent_level = temp_json["plot_data_sent_level"]
-        # plot_data_review_level = temp_json["plot_data_review_level"]
-        plot_data = pickle.load(open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "rb"))
-
-    for analysis in analysis_types:   
-        myprint(analysis)     
-        amazon_data, non_amazon_data = util.filter_amazon(plot_data[analysis])
-        # ylim_top = max(max([float(d["value"]) for d in amazon_data]), max([float(d["value"]) for d in non_amazon_data]))
-        ylim_top = max([float(d["value"]) for d in non_amazon_data])
-        ylim_top = 1.8*ylim_top
-
-
-        seaborn_plot_util_old.draw_grouped_barplot_four_subbars(non_amazon_data, "name", "value", 
-            "category", 
-            os.path.join(saves_dir, 
-            plot_save_prefix+"_"+str(analysis)+"_non_amz"),
-            ylim_top=ylim_top,
-            y_axis_name="#occurences",
-            negation=True)
-
-        ylim_top = max([float(d["value"]) for d in amazon_data])
-        ylim_top = 1.7*ylim_top
-
-        seaborn_plot_util_old.draw_grouped_barplot_four_subbars(amazon_data, "name", "value", 
-            "category", 
-            os.path.join(saves_dir, 
-            plot_save_prefix+"_"+str(analysis)+"_amz"),
-            ylim_top=ylim_top,
-            y_axis_name="#occurences",
-            negation=True, amazon_data_flag=True)
+    pickle.dump(plot_data, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))

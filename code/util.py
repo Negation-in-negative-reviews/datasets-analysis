@@ -1,3 +1,13 @@
+import os
+import spacy
+import numpy as np
+import random
+import torch
+
+nlp = spacy.load("en_core_web_md")
+tokenizer = nlp.Defaults.create_tokenizer(nlp)
+
+
 def filter_amazon(plot_data): 
     amazon_names = ['Pet Supplies', 'Luxury Beauty', 'Automotive', 'Cellphones', 'Sports']
     amazon_names = [val.lower() for val in amazon_names]   
@@ -10,15 +20,6 @@ def filter_amazon(plot_data):
             plot_data_non_amz.append(d)
 
     return plot_data_amz, plot_data_non_amz
-
-import os
-import spacy
-import numpy as np
-import random
-import torch
-
-nlp = spacy.load("en_core_web_md")
-tokenizer = nlp.Defaults.create_tokenizer(nlp)
 
 # If there's a GPU available...
 def get_device(device_no: int):

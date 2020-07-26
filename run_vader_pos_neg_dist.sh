@@ -1,0 +1,2 @@
+#!/bin/sh
+nohup python code/vader_pos_neg_dist.py --datasets_info_json="./input.json" --vader_lexicon_path="/home/madhu/vaderSentiment/vaderSentiment/vader_lexicon.txt" &

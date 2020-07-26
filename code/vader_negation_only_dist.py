@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import util
+import argparse
 
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
@@ -86,15 +87,32 @@ def compute_negation_util(data_file, name, seed_val, plot_data, category, analys
         })
 
 if __name__ == "__main__":
-    seed_val = 23
-    np.random.seed(seed_val)
-    preload_flag = True
+    parser = argparse.ArgumentParser()
 
-    saves_dir = os.path.join("saves", "negation")
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        # required=True,
+                        help="")    
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+   
+    args = parser.parse_args()    
+    myprint(f"args: {args}")   
+    np.random.seed(args.seed_val)    
+
+    saves_dir = os.path.join(open(args.saves_dir_name), "negation")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)   
     plot_save_prefix = "vader_negation_only_dist"
-    
-    seed_vals = [23]
+        
     plot_data = {
         "word_level": [],
         "sent_level": [],
@@ -102,41 +120,14 @@ if __name__ == "__main__":
     }
     analysis_types = list(plot_data.keys())
 
-    if not preload_flag:            
-        dataset_files = json.loads(open("input.json").read())
+    dataset_files = json.loads(open(args.datasets_info_json).read())
 
-        for data_file in dataset_files:
-            for seed_val in seed_vals:
-                myprint(f"Dataset: {data_file}")
-                myprint(f"Seed val: {seed_val}")
-
-                compute_negation_util(data_file["positive"], data_file["name"], seed_val, plot_data, 
-                    "positive", analysis_types)
-                compute_negation_util(data_file["negative"], data_file["name"], seed_val, plot_data, 
-                    "negative", analysis_types)
-                
-                print()
-                print()
-        pickle.dump(plot_data, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))        
-    else:
-        plot_data = pickle.load(open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "rb"))
-    for analysis in analysis_types:
-        amazon_data, non_amazon_data = util.filter_amazon(plot_data[analysis])
-        # ylim_top = max(max([float(d["value"]) for d in amazon_data]), max([float(d["value"]) for d in non_amazon_data]))
-        # ylim_top = 1.2*ylim_top
-
-        ylim_top = max([float(d["value"]) for d in amazon_data])
-        ylim_top = 1.7*ylim_top
-        
-        seaborn_plot_util.draw_grouped_barplot(amazon_data, "name", "value", 
-            "category", os.path.join(saves_dir, plot_save_prefix+"_"+str(analysis)+"_amz"), 
-            ylim_top=ylim_top,
-            # y_axis_name="\#occurences",
-            amazon_data_flag=True)
-
-        ylim_top = max([float(d["value"]) for d in non_amazon_data])
-        ylim_top = 1.7*ylim_top
-        seaborn_plot_util.draw_grouped_barplot(non_amazon_data, "name", "value", 
-            "category", os.path.join(saves_dir, plot_save_prefix+"_"+str(analysis)+"_non_amz"), ylim_top=ylim_top, 
-            # y_axis_name="\#occurences"
-            )
+    for data_file in dataset_files:            
+        myprint(f"Dataset: {data_file}")            
+        compute_negation_util(data_file["positive"], data_file["name"], args.seed_val, plot_data, 
+            "positive", analysis_types)
+        compute_negation_util(data_file["negative"], data_file["name"], args.seed_val, plot_data, 
+            "negative", analysis_types)        
+        print()
+        print()
+    pickle.dump(plot_data, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))        

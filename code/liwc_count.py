@@ -97,10 +97,10 @@ if __name__ == "__main__":
     parser.add_argument("--saves_dir_name",
                         default="saves",
                         type=str,
-                        required=True,
+                        # required=True,
                         help="")
     parser.add_argument("--liwc_filepath",
-                        default="/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic",
+                        default=None,
                         type=str,
                         required=True,
                         help="")
@@ -108,11 +108,12 @@ if __name__ == "__main__":
                         default=23,
                         type=int,
                         help="")
-    parser.add_argument("--preload_flag",
-                        action='store_true',
-                        help="Whether to run training.")
+    # parser.add_argument("--preload_flag",
+    #                     action='store_true',
+    #                     help="Whether to run training.")
     
-    args = parser.parse_args()    
+    args = parser.parse_args()  
+    myprint(f"args: {args}")     
     np.random.seed(args.seed_val)
 
     saves_dir = os.path.join(args.saves_dir_name, "liwc_dist")
@@ -133,54 +134,54 @@ if __name__ == "__main__":
 
     amazon_names = ['Pet Supplies', 'Luxury Beauty', 'Automotive', 'Cellphones', 'Sports']
 
-    if not args.preloadflag:
-        result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(args.liwc_filepath)            
-        datasets = json.loads(open(args.dataset_info_json, "r").read())
-        plot_data = {}
-        for a_type in analysis_types:
-            plot_data[a_type] = []
-        for data in datasets:
-            myprint(data)
-            plot_data = compute_liwc(plot_data, data["positive"], data["name"], "positive", 
-                required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
-            plot_data = compute_liwc(plot_data, data["negative"], data["name"], "negative", 
-                required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
-            
-            pickle_save_dir = os.path.join(saves_dir, "all")
-            Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
-            pickle.dump(plot_data, open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "wb"))
-    else:
+    # if not args.preloadflag:
+    result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(args.liwc_filepath)            
+    datasets = json.loads(open(args.datasets_info_json, "r").read())
+    plot_data = {}
+    for a_type in analysis_types:
+        plot_data[a_type] = []
+    for data in datasets:
+        myprint(data)
+        plot_data = compute_liwc(plot_data, data["positive"], data["name"], "positive", 
+            required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
+        plot_data = compute_liwc(plot_data, data["negative"], data["name"], "negative", 
+            required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
+        
         pickle_save_dir = os.path.join(saves_dir, "all")
         Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
-        plot_data = pickle.load(open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "rb"))  
+        pickle.dump(plot_data, open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "wb"))
+    # else:
+    #     pickle_save_dir = os.path.join(saves_dir, "all")
+    #     Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
+    #     plot_data = pickle.load(open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "rb"))  
     
-    plot_categories = [
-        ["posemo","negemo"], 
-        ["anger", "sad"]
-    ]
-    for analysis in analysis_types:
-        plot_data_df = pd.DataFrame(plot_data[analysis])
-        plot_data_pos_neg_amz = []
-        plot_data_pos_neg_non_amz = []
-        colors =[
-            [(114/255, 200/255, 117/255),(209/255, 68/255, 68/255)]*2,
-            [(67/255, 144/255, 188/255),(141/255, 190/255, 216/255)]*2,
-        ]  
-        for idx,plot_cat in enumerate(plot_categories):
-            plot_data_cat = plot_data_df[plot_data_df["liwc_category"].isin(plot_cat)]
-            plot_data_cat = plot_data_cat.to_dict('records')            
-            plot_data_cat_amz, plot_data_cat_non_amz = util.filter_amazon(plot_data_cat)
+    # plot_categories = [
+    #     ["posemo","negemo"], 
+    #     ["anger", "sad"]
+    # ]
+    # for analysis in analysis_types:
+    #     plot_data_df = pd.DataFrame(plot_data[analysis])
+    #     plot_data_pos_neg_amz = []
+    #     plot_data_pos_neg_non_amz = []
+    #     colors =[
+    #         [(114/255, 200/255, 117/255),(209/255, 68/255, 68/255)]*2,
+    #         [(67/255, 144/255, 188/255),(141/255, 190/255, 216/255)]*2,
+    #     ]  
+    #     for idx,plot_cat in enumerate(plot_categories):
+    #         plot_data_cat = plot_data_df[plot_data_df["liwc_category"].isin(plot_cat)]
+    #         plot_data_cat = plot_data_cat.to_dict('records')            
+    #         plot_data_cat_amz, plot_data_cat_non_amz = util.filter_amazon(plot_data_cat)
         
-            ylim_top = max([float(d["value"]) for d in plot_data_cat_amz])
-            ylim_top = 1.7*ylim_top
-            seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_amz, colors[idx],
-                "name", "value", "review category", 
-                os.path.join(saves_dir, plot_save_prefix+"_"+"_".join(plot_cat)+"_"+str(analysis)+"_amz"),
-                ylim_top=ylim_top, liwc_cats=plot_cat, amazon_data_flag=True)
+    #         ylim_top = max([float(d["value"]) for d in plot_data_cat_amz])
+    #         ylim_top = 1.7*ylim_top
+    #         seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_amz, colors[idx],
+    #             "name", "value", "review category", 
+    #             os.path.join(saves_dir, plot_save_prefix+"_"+"_".join(plot_cat)+"_"+str(analysis)+"_amz"),
+    #             ylim_top=ylim_top, liwc_cats=plot_cat, amazon_data_flag=True)
 
-            ylim_top = max([float(d["value"]) for d in plot_data_cat_non_amz])
-            ylim_top = 1.7*ylim_top
-            seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_non_amz, colors[idx], 
-                "name", "value", "review category", 
-                os.path.join(saves_dir, plot_save_prefix+"_"+"_".join(plot_cat)+"_"+str(analysis)+"_non_amz"),
-                ylim_top=ylim_top, liwc_cats=plot_cat)
+    #         ylim_top = max([float(d["value"]) for d in plot_data_cat_non_amz])
+    #         ylim_top = 1.7*ylim_top
+    #         seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_non_amz, colors[idx], 
+    #             "name", "value", "review category", 
+    #             os.path.join(saves_dir, plot_save_prefix+"_"+"_".join(plot_cat)+"_"+str(analysis)+"_non_amz"),
+    #             ylim_top=ylim_top, liwc_cats=plot_cat)
