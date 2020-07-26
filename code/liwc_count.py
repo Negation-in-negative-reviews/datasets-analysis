@@ -147,9 +147,9 @@ if __name__ == "__main__":
         plot_data = compute_liwc(plot_data, data["negative"], data["name"], "negative", 
             required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
         
-        pickle_save_dir = os.path.join(saves_dir, "all")
-        Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
-        pickle.dump(plot_data, open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "wb"))
+    pickle_save_dir = os.path.join(saves_dir, "all")
+    Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
+    pickle.dump(plot_data, open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "wb"))
     # else:
     #     pickle_save_dir = os.path.join(saves_dir, "all")
     #     Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)

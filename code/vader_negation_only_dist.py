@@ -109,7 +109,7 @@ if __name__ == "__main__":
     myprint(f"args: {args}")   
     np.random.seed(args.seed_val)    
 
-    saves_dir = os.path.join(open(args.saves_dir_name), "negation")
+    saves_dir = os.path.join(open(args.saves_dir_name), "vader_negation")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)   
     plot_save_prefix = "vader_negation_only_dist"
         
