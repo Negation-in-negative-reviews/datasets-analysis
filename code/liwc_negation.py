@@ -10,18 +10,22 @@ import sys
 from scipy import stats
 import vader_negation_util
 import pprint
+import argparse
+import json
+from pathlib import Path
+import os
+
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
 
 nlp = spacy.load("en_core_web_md")
 
-def compute_liwc(data, result, class_id, cluster_result, 
-categories, category_reverse):
+def compute_negation_using_liwc(data, save_pickle_path, result, class_id, cluster_result, categories, category_reverse):
     
-    data_filepath = data["data_filepath"]
-    save_pickle_path = data["save_pickle_path"]
+    data_filepath = data["data_filepath"]    
     required_categories = ["posemo", "negemo"]
     n_samples = None
+
     if "n_samples" in data:
         n_samples = data["n_samples"]
     
@@ -39,8 +43,6 @@ categories, category_reverse):
         selected_reviews = [all_reviews[idx] for idx in indices]
         count = 0
         for rev in selected_reviews:
-            # if count%1000 == 0:
-            #     print(count)
             count += 1
             doc = nlp(rev)            
             token_count = len(doc)
@@ -102,48 +104,48 @@ categories, category_reverse):
 
 
 if __name__ == "__main__": 
-    seed_val = 23
-    np.random.seed(seed_val)
+    parser = argparse.ArgumentParser()
 
-    liwc_filepath = "/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic"
-    result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(liwc_filepath)
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--liwc_filepath",
+                        default="/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+    parser.add_argument("--preload_flag",
+                        action='store_true',
+                        help="Whether to use precomputed pickle files.")
     
-    datasets = [        
-        {
-            "data_filepath": "/data/madhu/stanford-sentiment-treebank/matched_data/neg_reviews.txt",
-            "save_pickle_path": "pickle_saves/sst_neg_liwc_negation.pickle",
-            # "n_samples": 100
-        },
-        {
-            "data_filepath": "/data/madhu/stanford-sentiment-treebank/matched_data/pos_reviews.txt",
-            "save_pickle_path": "pickle_saves/sst_pos_liwc_negation.pickle",
-            # "n_samples": 100
-        },
-        {
-            "data_filepath": "/data/madhu/yelp/yelp_processed_data/review.0",            
-            "save_pickle_path": "pickle_saves/yelp_neg_liwc_negation_dist.pickle",
-            "n_samples": 5000
-        },
-        {
-            "data_filepath": "/data/madhu/yelp/yelp_processed_data/review.1",            
-            "save_pickle_path": "pickle_saves/yelp_pos_liwc_negation_dist.pickle",
-            "n_samples": 5000
-        },        
-        # {
-        #     "data_filepath": "/data/madhu/imdb_dataset/processed_data/pos_reviews_train",            
-        #     "save_pickle_path": "pickle_saves/imdb_pos_5k_liwc_negation_dist.pickle",
-        #     "n_samples": 5000
-        # },
-        # {
-        #     "data_filepath": "/data/madhu/imdb_dataset/processed_data/neg_reviews_train",            
-        #     "save_pickle_path": "pickle_saves/imdb_neg_5k_liwc_negation_dist.pickle",
-        #     "n_samples": 5000
-        # }         
-    ]
-
-    for data in datasets:
-        myprint(data)        
-        compute_liwc(data, result, class_id, 
+    args = parser.parse_args()    
+    np.random.seed(args.seed_val)    
+    result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(args.liwc_filepath)
+    datasets = json.loads(open(args.dataset_info_json, "r").read())
+    saves_dir = os.path.join(args.saves_dir_name, "negation_using_liwc")
+    Path(saves_dir).mkdir(parents=True, exist_ok=True)
+    plot_save_prefix = "liwc_negation_"
+    
+    
+    myprint(f"args: {args}")
+    for data in datasets:               
+        save_pickle_path = os.path.join(saves_dir, data["name"]+"_pos_reviews.pickle")
+        compute_negation_using_liwc(data["positive"], save_pickle_path, result, class_id, 
+            cluster_result, categories, category_reverse)
+        save_pickle_path = os.path.join(saves_dir, data["name"]+"_neg_reviews.pickle")
+        compute_negation_using_liwc(data["negative"], save_pickle_path, result, class_id, 
             cluster_result, categories, category_reverse)
         print()
         print()

@@ -8,6 +8,7 @@ import pprint
 import json
 from pathlib import Path
 import os
+import argparse
 
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
@@ -64,20 +65,45 @@ def count_not_token(args: dict):
         return not_count_sent_normalized, not_count_token_normalized, not_count_review_normalized
 
 if __name__ == "__main__":
-    seed_val = 23
-    np.random.seed(seed_val)
+    parser = argparse.ArgumentParser()
 
-    saves_dir = os.path.join("saves", "all")
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--liwc_filepath",
+                        default="/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+    parser.add_argument("--preload_flag",
+                        action='store_true',
+                        help="Whether to use precomputed pickle files.")
+    
+    args = parser.parse_args()    
+    np.random.seed(args.seed_val)
+
+    saves_dir = os.path.join(args.saves_dir_name, "not_token_dist")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)   
 
-    plot_save_prefix = "not_token_dist"
+    save_prefix = "overall"
     plot_data_word_level = []
     plot_data_sent_level = []
     plot_data_review_level = []
-    preload_flag = False
 
-    if not preload_flag:        
-        datasets = json.loads(open("input.json", "r").read())
+    if not args.preload_flag:        
+        datasets = json.loads(open(args.dataset_info_json, "r").read())
         for data in datasets:
             myprint(data)        
             not_count_sent_normalized, not_count_token_normalized, not_count_review_normalized = count_not_token(data["positive"])
@@ -133,17 +159,16 @@ if __name__ == "__main__":
             "plot_data_word_level": plot_data_word_level,
             "plot_data_sent_level": plot_data_sent_level,
             "plot_data_review_level": plot_data_review_level
-        }, open("saves/all/not_token_dist.pickle", "wb"))
+        }, open(os.path.join(saves_dir, save_prefix+"_dist.pickle"), "wb"))
     else:
-        temp_json = pickle.load(open("saves/all/not_token_dist.pickle", "rb"))
+        temp_json = pickle.load(open(os.path.join(saves_dir, save_prefix+"_dist.pickle"), "rb"))
         plot_data_word_level = temp_json["plot_data_word_level"]
         plot_data_sent_level = temp_json["plot_data_sent_level"]
         plot_data_review_level = temp_json["plot_data_review_level"]
 
-
     seaborn_plot_util.draw_grouped_barplot(plot_data_word_level, "name", "Average no of tokens", 
-    "category", os.path.join(saves_dir, plot_save_prefix+"_word_level.png"))
+    "category", os.path.join(saves_dir, save_prefix+"_word_level.png"))
     seaborn_plot_util.draw_grouped_barplot(plot_data_sent_level, "name", "Average no of tokens", 
-    "category", os.path.join(saves_dir, plot_save_prefix+"_sent_level.png"))
+    "category", os.path.join(saves_dir, save_prefix+"_sent_level.png"))
     seaborn_plot_util.draw_grouped_barplot(plot_data_review_level, "name", "Average no of tokens", 
-    "category", os.path.join(saves_dir, plot_save_prefix+"_review_level.png"))
+    "category", os.path.join(saves_dir, save_prefix+"_review_level.png"))

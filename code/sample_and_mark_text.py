@@ -35,40 +35,11 @@ def get_sentence_sentiment(args: dict(), texts):
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
     torch.cuda.manual_seed_all(seed_val)
-    
-    # testfile = args.input_file
-    # true_label = args.label
-    truncation = args.truncation
-    # n_samples = None
-    # if "n_samples" in args:
-    #     n_samples = args.n_samples
-    
+  
     # Load the BERT tokenizer.
-    # logger.info('Loading BERT tokenizer...')
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
     max_len = 0
-    reviews = []
-    # labels = []
-    # with open(testfile, "r") as fin:
-    #     reviews = fin.readlines()
-    
-    # reviews = [rev.lower() for rev in reviews]
-    
-    # if n_samples == None:
-    #     n_samples = len(reviews)
-
-    # indices = np.random.choice(np.arange(len(reviews)), size=n_samples)
-    # selected_reviews = [reviews[idx] for idx in indices]
-
-    # labels = [0 if true_label == "negative" else 1]*len(selected_reviews)
-    # For every sentence...
-    # for rev in selected_reviews:
-    #     # Tokenize the text and add `[CLS]` and `[SEP]` tokens.
-    #     input_ids = tokenizer.encode(rev, add_special_tokens=True)
-    #     # Update the maximum sentence length.
-    #     max_len = max(max_len, len(input_ids))
-        
-    # print('Max sentence length: ', max_len)
+    reviews = []    
 
     # Tokenize all of the sentences and map the tokens to thier word IDs.
     input_ids = []
@@ -78,9 +49,9 @@ def get_sentence_sentiment(args: dict(), texts):
     for rev in texts:
         input_id = tokenizer.encode(rev, add_special_tokens=True)
         if len(input_id) > 512:                        
-            if truncation == "tail-only":
+            if args.truncation == "tail-only":
                 input_id = [tokenizer.cls_token_id]+input_id[-511:]      
-            elif truncation == "head-and-tail":
+            elif args.truncation == "head-and-tail":
                 input_id = [tokenizer.cls_token_id]+input_id[1:129]+input_id[-382:]+[tokenizer.sep_token_id]
             else:                
                 input_id = input_id[:511]+[tokenizer.sep_token_id]
@@ -161,9 +132,6 @@ def get_sentence_sentiment(args: dict(), texts):
     return flat_predictions
 
 
-# def mark_sample(text, vader_sentiment_scores):
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -192,7 +160,10 @@ if __name__ == "__main__":
     parser.add_argument("--truncation",
                         default="head-and-tail",
                         type=str,
-                        # required=True,
+                        help="")
+    parser.add_argument("--liwc_filepath",
+                        default="/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic",
+                        type=str,
                         help="")
     parser.add_argument("--n_samples",
                         default=None,
@@ -217,29 +188,15 @@ if __name__ == "__main__":
     if args.filter_threshold != -1:
         texts = util.filter_samples(texts, args.filter_threshold)
 
-    samples = util.get_samples(texts, args.n_samples, args.seed_val)
-    # samples = [s.lower() for s in samples]
-    # print("Samples: ")
-    # print("---------------")
-    # for s in samples:
-    #     print(s)
-    # print("\n\n")
+    samples = util.get_samples(texts, args.n_samples, args.seed_val)    
     processed_texts = []
     sample_sentences = []
-    # for txt in samples:
-    #     output_text = ""
-    #     doc = nlp(txt)
-    #     for sent in doc.sents:
-    #         sample_sentences.append(sent.text)
-    
-    # preds = get_sentence_sentiment(args, sample_sentences)
-    # print(len(preds))
+
     count = 0
     neg_words = []
     neg_words.extend(NEGATE)
     if args.liwc:
-        liwc_filepath = "/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic"
-        liwc_result, liwc_class_id, liwc_cluster_result, liwc_categories, liwc_category_reverse = liwc_util.load_liwc(liwc_filepath)            
+        liwc_result, liwc_class_id, liwc_cluster_result, liwc_categories, liwc_category_reverse = liwc_util.load_liwc(args.liwc_filepath)            
 
     for txt in samples:        
         doc = nlp(txt)
@@ -247,8 +204,7 @@ if __name__ == "__main__":
         for sent in doc.sents:            
             doc_sent = nlp(sent.text)
             sent_text = ""
-            words = sent.text.strip("\n").split()
-            # negation_words = vader_negation_util.negated_returns_words(words)            
+            words = sent.text.strip("\n").split()            
             for token in doc_sent:   
                 token_proc_text = ""
                 token_text = token.text.lower()
@@ -285,12 +241,6 @@ if __name__ == "__main__":
                 if token_text in neg_words or "n't" in token_text:
                     token_proc_text = "\\textbf{"+token_proc_text+"}"
                 sent_text += token_proc_text+" "
-
-            # if preds[count] == 1:
-            #     output_text += "\\textbf{"+sent_text+"}"                
-            # elif preds[count] == 0:
-            #     output_text += sent_text
-            # count += 1
             output_text += sent_text
             
         processed_texts.append(output_text.strip())
@@ -302,10 +252,7 @@ if __name__ == "__main__":
     for text, proc_text in zip(samples, processed_texts):
         print("text:", text)
         print("processed text:", proc_text)
-        # fout.write("text: "+text+"\n"+"")
         fout.write(("\item "+proc_text.replace("$", "\$").replace("%", "\%")).strip("\n")+"\n")
-        # print()
-        # print("------------------")
 
 
 

@@ -15,6 +15,8 @@ from pathlib import Path
 import seaborn_plot_util
 import pprint
 import util
+import argparse
+
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
 
@@ -83,26 +85,39 @@ def compute_liwc(plot_data, data, dataset_name, review_category, required_catego
     return plot_data
 
 if __name__ == "__main__": 
-    seed_val = 23
-    np.random.seed(seed_val)
 
-    liwc_filepath = "/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic"
+    parser = argparse.ArgumentParser()
 
-    '''
-        result: a dictionary that maps each word to the LIWC cluster ids
-            that it belongs to
-        class_id: a dict that maps LIWC cluster to category id,
-            this does not seem useful, here for legacy reasons
-        cluster_result: a dict that maps LIWC cluster id to all words
-            in that cluster
-        categories: a dict that maps LIWC cluster to its name
-        category_reverse: a dict that maps LIWC cluster name to its id
-    '''
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--liwc_filepath",
+                        default="/data/LIWC2007/Dictionaries/LIWC2007_English100131.dic",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+    parser.add_argument("--preload_flag",
+                        action='store_true',
+                        help="Whether to run training.")
+    
+    args = parser.parse_args()    
+    np.random.seed(args.seed_val)
 
-    preloadflag = True
-    saves_dir = os.path.join("saves", "liwc")
+    saves_dir = os.path.join(args.saves_dir_name, "liwc_dist")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
-    plot_save_prefix = "liwc_dist"
+    plot_save_prefix = "liwc"
     plot_data = {}
     analysis_types = [
         "sent_level", 
@@ -118,18 +133,18 @@ if __name__ == "__main__":
 
     amazon_names = ['Pet Supplies', 'Luxury Beauty', 'Automotive', 'Cellphones', 'Sports']
 
-    if not preloadflag:
-        result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(liwc_filepath)            
-        datasets = json.loads(open("input.json", "r").read())
+    if not args.preloadflag:
+        result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(args.liwc_filepath)            
+        datasets = json.loads(open(args.dataset_info_json, "r").read())
         plot_data = {}
         for a_type in analysis_types:
             plot_data[a_type] = []
         for data in datasets:
             myprint(data)
-            plot_data = compute_liwc(plot_data, data["positive"], data["name"], "positive", required_categories, result, class_id, 
-                cluster_result, categories, category_reverse, analysis_types)
-            plot_data = compute_liwc(plot_data, data["negative"], data["name"], "negative", required_categories, result, class_id, 
-                cluster_result, categories, category_reverse, analysis_types)
+            plot_data = compute_liwc(plot_data, data["positive"], data["name"], "positive", 
+                required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
+            plot_data = compute_liwc(plot_data, data["negative"], data["name"], "negative", 
+                required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
             
             pickle_save_dir = os.path.join(saves_dir, "all")
             Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
@@ -158,12 +173,14 @@ if __name__ == "__main__":
         
             ylim_top = max([float(d["value"]) for d in plot_data_cat_amz])
             ylim_top = 1.7*ylim_top
-            seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_amz, colors[idx], "name", "value", "review category", 
+            seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_amz, colors[idx],
+                "name", "value", "review category", 
                 os.path.join(saves_dir, plot_save_prefix+"_"+"_".join(plot_cat)+"_"+str(analysis)+"_amz"),
                 ylim_top=ylim_top, liwc_cats=plot_cat, amazon_data_flag=True)
 
             ylim_top = max([float(d["value"]) for d in plot_data_cat_non_amz])
             ylim_top = 1.7*ylim_top
-            seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_non_amz, colors[idx], "name", "value", "review category", 
+            seaborn_plot_util.draw_grouped_barplot_four_subbars_liwc(plot_data_cat_non_amz, colors[idx], 
+                "name", "value", "review category", 
                 os.path.join(saves_dir, plot_save_prefix+"_"+"_".join(plot_cat)+"_"+str(analysis)+"_non_amz"),
                 ylim_top=ylim_top, liwc_cats=plot_cat)

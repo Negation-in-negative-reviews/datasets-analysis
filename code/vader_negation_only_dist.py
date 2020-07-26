@@ -55,15 +55,11 @@ def compute_negative_words_only(args: dict, seed_val: int):
                 "sents_count": sents_count,
                 "tokens_count": tokens_count
             })
-            # myprint(f"review: {rev}\nnegation count: {count}")
             rev_count += 1
 
         neg_words_count_arr = np.array(list(map(lambda x: x["negative_words_count"], neg_words_count)))
         neg_words_count_sent_normalized = np.array(list(map(lambda x: x["negative_words_count"]*1.0/x["sents_count"], neg_words_count)))
         neg_words_count_word_normalized = np.array(list(map(lambda x: x["negative_words_count"]*1.0/x["tokens_count"], neg_words_count)))
-
-        # neg_words_sent_level = [1.0*x/y if y!=0 else 0 for x,y in zip(neg_words_count_arr, neg_words_count_sent_normalized)]
-        # neg_words_word_level = [1.0*x/y if y!=0 else 0 for x,y in zip(neg_words_count_arr, neg_words_count_word_normalized)]
 
         myprint(f"Avg number of negative words, review-level: {np.mean(neg_words_count_arr)}")
         myprint(f"Avg number of negative words, sent-level: {np.mean(neg_words_count_sent_normalized)}")

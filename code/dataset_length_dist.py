@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import util
+import argparse
 
 pp = pprint.PrettyPrinter(indent=4)
 myprint = pp.pprint
@@ -60,21 +61,42 @@ def compute_dataset_length(data):
         return token_count_review_level, token_count_sent_level            
 
 if __name__ == "__main__": 
-    seed_val = 23
-    np.random.seed(seed_val)
+    parser = argparse.ArgumentParser()
+
+    ## Required parameters
+    parser.add_argument("--datasets_info_json",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
+                        type=str,
+                        required=True,
+                        help="")
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
+    parser.add_argument("--preload_flag",
+                        action='store_true',
+                        help="Whether to run training.")
     
-    saves_dir = os.path.join("saves", "dataset_length")
-    Path(saves_dir).mkdir(parents=True, exist_ok=True)       
-    preload_flag = True
+    args = parser.parse_args()
+
+    np.random.seed(args.seed_val)
+    
+    saves_dir = os.path.join(args.saves_dir_name, "dataset_length")
+    Path(saves_dir).mkdir(parents=True, exist_ok=True)           
     plot_data={
         "sent_level": [],
-        # "review_level": []
+        "review_level": []
     }
     analysis_types = list(plot_data.keys())
     plot_save_prefix = "dataset_length_dist"
 
-    if not preload_flag:
-        datasets = json.loads(open("input.json", "r").read())
+    if not args.preload_flag:
+        datasets = json.loads(open(args.datasets_info_json, "r").read())
         for data in datasets:
             myprint(data)        
             token_count = {}
@@ -108,26 +130,22 @@ if __name__ == "__main__":
         }, open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "wb"))
     else:
         plot_data = pickle.load(open(os.path.join(saves_dir, plot_save_prefix+".pickle"), "rb"))["plot_data"]
-        # plot_data = {
-        #     "sent_level": temp_json["plot_data_sent_level"],
-        #     "review_level": temp_json["plot_data_review_level"]
-        # }
 
-    for a_type in analysis_types:
-        plot_data_amz, plot_data_non_amz = util.filter_amazon(plot_data[a_type])
+    # for a_type in analysis_types:
+    #     plot_data_amz, plot_data_non_amz = util.filter_amazon(plot_data[a_type])
 
-        ylim_top = max([float(d["value"]) for d in plot_data_non_amz])
-        ylim_top = 1.2*ylim_top
+    #     ylim_top = max([float(d["value"]) for d in plot_data_non_amz])
+    #     ylim_top = 1.2*ylim_top
 
-        seaborn_plot_util.draw_grouped_barplot(plot_data_non_amz, "name", "value",
-                                    "category", os.path.join(saves_dir, plot_save_prefix+"_"+a_type+"_non_amz"),
-                                    figsize=(15, 6), position=(0.08, 0.08, 0.6, 0.9),
-                                    ylim_top=ylim_top, bbox_to_anchor=(1, 0.5, 0.2, 0.5))
+    #     seaborn_plot_util.draw_grouped_barplot(plot_data_non_amz, "name", "value",
+    #                                 "category", os.path.join(saves_dir, plot_save_prefix+"_"+a_type+"_non_amz"),
+    #                                 figsize=(15, 6), position=(0.08, 0.08, 0.6, 0.9),
+    #                                 ylim_top=ylim_top, bbox_to_anchor=(1, 0.5, 0.2, 0.5))
         
-        ylim_top = max([float(d["value"]) for d in plot_data_amz])
-        ylim_top = 1.7*ylim_top
+    #     ylim_top = max([float(d["value"]) for d in plot_data_amz])
+    #     ylim_top = 1.7*ylim_top
         
-        seaborn_plot_util.draw_grouped_barplot(plot_data_amz, "name", "value", 
-        "category", os.path.join(saves_dir, plot_save_prefix+"_"+a_type+"_amz"),ylim_top=ylim_top)
+    #     seaborn_plot_util.draw_grouped_barplot(plot_data_amz, "name", "value", 
+    #     "category", os.path.join(saves_dir, plot_save_prefix+"_"+a_type+"_amz"),ylim_top=ylim_top)
 
         

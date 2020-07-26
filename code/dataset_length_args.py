@@ -22,20 +22,11 @@ myprint = pp.pprint
 nlp = spacy.load("en_core_web_md")
 
 def compute_dataset_length(data_filepath, n_samples=None):
-    # myprint(data)
-    # data_filepath = data["data_filepath"]
     all_reviews = []
     
     with open(data_filepath, "r") as fin:
         for line in fin:
             all_reviews.append(line.strip("\n"))
-
-        # n_samples = None
-
-        # if "n_samples" in data:
-        #     n_samples = data["n_samples"]
-        # else:
-        #     n_samples = len(all_reviews)
 
         if n_samples == None:
             n_samples = len(all_reviews)
@@ -62,10 +53,7 @@ def compute_dataset_length(data_filepath, n_samples=None):
         myprint(f"# of sentences per review: {avg_no_of_sents_per_review}")
         return analysis_data
 
-if __name__ == "__main__": 
-    seed_val = 23
-    np.random.seed(seed_val)
-
+if __name__ == "__main__":  
     parser = argparse.ArgumentParser()
 
     ## Required parameters
@@ -84,8 +72,8 @@ if __name__ == "__main__":
                         type=str,
                         required=True,
                         help="")
-    parser.add_argument("--saves_dir",
-                        default=None,
+    parser.add_argument("--saves_dir_name",
+                        default="saves",
                         type=str,
                         required=True,
                         help="")
@@ -93,19 +81,22 @@ if __name__ == "__main__":
                         default=None,
                         type=int,
                         help="")
+    parser.add_argument("--seed_val",
+                        default=23,
+                        type=int,
+                        help="")
     
     args = parser.parse_args()
-    
-    saves_dir = os.path.join("saves", "dataset_length")
+    np.random.seed(args.seed_val)
+
+    saves_dir = os.path.join(args.saves_dir_name, "dataset_length")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)       
-    preload_flag = False
     plot_data_sent_level = []
     plot_data_review_level = []
     plot_save_prefix = "dataset_length_dist"
     analysis_data = {}
 
-
-    myprint(args)        
+    myprint(f"args: {args}")        
 
     analysis_data["positive"] = compute_dataset_length(args.pos_file, args.n_samples)       
     analysis_data["negative"] = compute_dataset_length(args.neg_file, args.n_samples)
