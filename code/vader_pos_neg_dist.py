@@ -190,7 +190,7 @@ if __name__ == "__main__":
         "review_level": []
     }
 
-    saves_dir = os.path.join(args.saves_dir_name, "pos_neg")
+    saves_dir = os.path.join(args.saves_dir_name, "vader_pos_neg_dist")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
     plot_save_prefix = "vader_pos_neg_dist"
 

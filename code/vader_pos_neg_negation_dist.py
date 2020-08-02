@@ -197,7 +197,7 @@ if __name__ == "__main__":
     }
     analysis_types = list(plot_data.keys())
 
-    saves_dir = os.path.join(args.saves_dir_name, "pos_neg_negation")
+    saves_dir = os.path.join(args.saves_dir_name, "vader_pos_neg_negation_dist")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
     plot_save_prefix = "vader_pos_neg_negation_dist"
 

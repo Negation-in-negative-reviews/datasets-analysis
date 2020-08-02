@@ -22,7 +22,8 @@ myprint = pp.pprint
 
 nlp = spacy.load("en_core_web_md")
 
-def compute_liwc(plot_data, data, dataset_name, review_category, required_categories, result, class_id, cluster_result, 
+def compute_liwc(plot_data, plot_data_negation, data, dataset_name, review_category, 
+    required_categories, result, class_id, cluster_result, 
     categories, category_reverse, analysis_types):
     
     data_filepath = data["data_filepath"]
@@ -73,7 +74,7 @@ def compute_liwc(plot_data, data, dataset_name, review_category, required_catego
         
         for a_type in analysis_types:                
             plot_data[a_type].append({
-                "category": "negative - "+review_category+" review ",
+                # "category": "negative - "+review_category+" review ",
                 "review category": review_category,
                 "liwc_category": cat,
                 "name": dataset_name,
@@ -81,8 +82,26 @@ def compute_liwc(plot_data, data, dataset_name, review_category, required_catego
                 "sem_value": stats.sem(category_counts[a_type]),
                 "all_samples_data": category_counts[a_type]
             })               
+    
+    category_counts = {}
+    for cat in ["negation_posemo", "negation_negemo"]:       
+        category_counts["word_level"] = list(map(lambda x:1.0*x[cat]/x["total_no_of_tokens"], all_reviews_data))
+        category_counts["sent_level"] = list(map(lambda x:1.0*x[cat]/x["total_no_of_sents"], all_reviews_data))
+        category_counts["review_level"] = list(map(lambda x:x[cat], all_reviews_data))
+        
+        for a_type in analysis_types:                
+            plot_data_negation[a_type].append({
+                # "category": "negative - "+review_category+" review ",
+                "review category": review_category,
+                "negation_category": cat,
+                "name": dataset_name,
+                "value": np.mean(category_counts[a_type]),
+                "sem_value": stats.sem(category_counts[a_type]),
+                "all_samples_data": category_counts[a_type]
+            })               
 
-    return plot_data
+
+    return plot_data, plot_data_negation
 
 if __name__ == "__main__": 
 
@@ -119,7 +138,7 @@ if __name__ == "__main__":
     saves_dir = os.path.join(args.saves_dir_name, "liwc_dist")
     Path(saves_dir).mkdir(parents=True, exist_ok=True)
     plot_save_prefix = "liwc"
-    plot_data = {}
+
     analysis_types = [
         "sent_level", 
         "review_level", 
@@ -138,18 +157,21 @@ if __name__ == "__main__":
     result, class_id, cluster_result, categories, category_reverse = liwc_util.load_liwc(args.liwc_filepath)            
     datasets = json.loads(open(args.datasets_info_json, "r").read())
     plot_data = {}
+    plot_data_negation = {}
     for a_type in analysis_types:
         plot_data[a_type] = []
+        plot_data_negation[a_type] = []
     for data in datasets:
         myprint(data)
-        plot_data = compute_liwc(plot_data, data["positive"], data["name"], "positive", 
+        plot_data, plot_data_negation = compute_liwc(plot_data, plot_data_negation, data["positive"], data["name"], "positive", 
             required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
-        plot_data = compute_liwc(plot_data, data["negative"], data["name"], "negative", 
+        plot_data, plot_data_negation = compute_liwc(plot_data, plot_data_negation, data["negative"], data["name"], "negative", 
             required_categories, result, class_id, cluster_result, categories, category_reverse, analysis_types)
         
     pickle_save_dir = os.path.join(saves_dir, "all")
     Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
     pickle.dump(plot_data, open(os.path.join(pickle_save_dir, "liwc_dist_data.pickle"), "wb"))
+    pickle.dump(plot_data_negation, open(os.path.join(pickle_save_dir, "liwc_dist_negation_data.pickle"), "wb"))
     # else:
     #     pickle_save_dir = os.path.join(saves_dir, "all")
     #     Path(pickle_save_dir).mkdir(parents=True, exist_ok=True)
