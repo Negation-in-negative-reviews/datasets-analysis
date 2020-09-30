@@ -44,7 +44,7 @@ def get_samples(data, n_samples, seed_val=23):
     if n_samples == None:
         return data
         
-    indices = np.random.choice(np.arange(len(data)), size=n_samples)
+    indices = np.random.choice(np.arange(len(data)), size=min(len(data),n_samples), replace=False)
     sampled_data = [data[idx] for idx in indices]
     return sampled_data
 

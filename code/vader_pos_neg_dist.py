@@ -57,7 +57,7 @@ def compute_vadersentiment(data, dataset_name, vader_sentiment_scores):
         if n_samples == None:
             n_samples = len(all_reviews)
 
-        indices = np.random.choice(np.arange(len(all_reviews)), size=n_samples)
+        indices = np.random.choice(np.arange(len(all_reviews)), size=min(len(all_reviews),n_samples), replace=False)
         selected_reviews = [all_reviews[idx] for idx in indices]
         count = 0
         for rev in selected_reviews:

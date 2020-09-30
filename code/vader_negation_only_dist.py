@@ -32,7 +32,7 @@ def compute_negative_words_only(args: dict, seed_val: int):
         else:
             n_samples = len(all_reviews)
 
-        indices = np.random.choice(np.arange(len(all_reviews)), size=n_samples)       
+        indices = np.random.choice(np.arange(len(all_reviews)), size=min(len(all_reviews),n_samples), replace=False)       
 
         sampled_reviews = [all_reviews[idx] for idx in indices]
 
